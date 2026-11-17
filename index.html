@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PI-VAULT // Encrypted Gateway</title>
+  <style>
+    :root {
+      --bg: #06070d;
+      --card: rgba(13, 17, 30, 0.85);
+      --cyan: #00f3ff;
+      --purple: #bc13fe;
+      --green: #00ff66;
+      --red: #ff003c;
+      --text: #e2e8f0;
+      --muted: #64748b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(0, 243, 255, 0.12), transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(188, 19, 254, 0.12), transparent 40%),
+        linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+      color: var(--text);
+      padding: 20px;
+    }
+
+    .vault-card {
+      width: 100%;
+      max-width: 410px;
+      background: var(--card);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 243, 255, 0.35);
+      border-radius: 18px;
+      padding: 36px 28px;
+      box-shadow: 0 0 30px rgba(0, 243, 255, 0.15), inset 0 0 20px rgba(0, 243, 255, 0.05);
+      text-align: center;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .vault-card.error {
+      border-color: var(--red);
+      box-shadow: 0 0 35px rgba(255, 0, 60, 0.35);
+      animation: shake 0.4s ease-in-out;
+    }
+
+    .vault-card.success {
+      border-color: var(--green);
+      box-shadow: 0 0 35px rgba(0, 255, 102, 0.35);
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+
+    .pi-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(0, 243, 255, 0.08);
+      border: 1.5px solid var(--cyan);
+      color: var(--cyan);
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      box-shadow: 0 0 18px rgba(0, 243, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .vault-card.error .pi-badge {
+      border-color: var(--red);
+      color: var(--red);
+      box-shadow: 0 0 18px rgba(255, 0, 60, 0.4);
+    }
+
+    .vault-card.success .pi-badge {
+      border-color: var(--green);
+      color: var(--green);
+      box-shadow: 0 0 18px rgba(0, 255, 102, 0.4);
+    }
+
+    h1 {
+      font-size: 1.45rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      background: linear-gradient(90deg, var(--cyan), #fff, var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 18px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 46px 14px 16px;
+      background: rgba(6, 7, 13, 0.9);
+      border: 1px solid rgba(0, 243, 255, 0.3);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 1.1rem;
+      letter-spacing: 4px;
+      text-align: center;
+      outline: none;
+      transition: all 0.25s ease;
+    }
+
+    input:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.25);
+    }
+
+    .toggle-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 4px;
+    }
+
+    .toggle-btn:hover { color: var(--cyan); }
+
+    .unlock-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      color: #06070d;
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.25s ease;
+    }
+
+    .unlock-btn:hover {
+      box-shadow: 0 0 22px rgba(0, 243, 255, 0.45);
+      transform: translateY(-1px);
+    }
+
+    .unlock-btn:active { transform: translateY(0); }
+
+    .status {
+      margin-top: 16px;
+      font-size: 0.85rem;
+      min-height: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    .status.err { color: var(--red); }
+    .status.ok { color: var(--green); }
+
+    .fallback-link {
+      display: none;
+      margin-top: 14px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--green);
+      color: var(--green);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .fallback-link:hover { background: rgba(0, 255, 102, 0.1); }
+  </style>
+</head>
+<body>
+
+  <div class="vault-card" id="card">
+    <div class="pi-badge">π</div>
+    <h1>Pi-Cipher Vault</h1>
+    <p class="subtitle">Enter numeric sequence to derive π decimal key</p>
+
+    <form id="vaultForm">
+      <div class="input-group">
+        <input type="password" id="passInput" placeholder="••••••" inputmode="numeric" autocomplete="off" required />
+        <button type="button" class="toggle-btn" id="toggleVis">SHOW</button>
+      </div>
+      <button type="submit" class="unlock-btn" id="submitBtn">Decrypt &amp; Unlock</button>
+    </form>
+
+    <div class="status" id="statusMsg"></div>
+    <a href="#" class="fallback-link" id="directLink" target="_blank" rel="noopener noreferrer">Open Decrypted Drive Folder ↗</a>
+  </div>
+
+  <script>
+    // Pi decimal stream (3.14159265358979323846...)
+    const PI_DECIMALS = "14159265358979323846264338327950288419716939937510";
+
+    // AES-256-GCM Encrypted Payload (Target URL is encrypted using the Pi-derived key)
+    const VAULT_BLOB = {
+      iv: [142, 77, 19, 204, 88, 12, 231, 95, 44, 167, 109, 31],
+      salt: [19, 134, 211, 47, 92, 180, 15, 241, 68, 123, 205, 39, 84, 162, 11, 229],
+      cipher: [
+        252, 81, 39, 132, 199, 135, 196, 179, 252, 132, 34, 226, 200, 116, 152, 132,
+        151, 88, 186, 12, 82, 41, 146, 202, 108, 108, 194, 117, 17, 46, 169, 32,
+        125, 192, 6, 42, 209, 248, 228, 72, 163, 74, 136, 126, 48, 74, 202, 213,
+        13, 188, 17, 254, 175, 243, 182, 33, 41, 144, 245, 76, 202, 226, 232, 85,
+        245, 161, 136, 179, 120, 74, 30, 155, 241, 11, 61, 199, 77, 184, 18, 99,
+        102, 149, 220, 81, 17, 163, 214, 151, 248, 226
+      ]
+    };
+
+    const form = document.getElementById('vaultForm');
+    const passInput = document.getElementById('passInput');
+    const toggleVis = document.getElementById('toggleVis');
+    const card = document.getElementById('card');
+    const statusMsg = document.getElementById('statusMsg');
+    const directLink = document.getElementById('directLink');
+
+    toggleVis.addEventListener('click', () => {
+      const isHidden = passInput.type === 'password';
+      passInput.type = isHidden ? 'text' : 'password';
+      toggleVis.textContent = isHidden ? 'HIDE' : 'SHOW';
+    });
+
+    // Transforms user input into Pi decimal sequence (e.g., 1st, 5th, 9th... decimal of Pi)
+    function mapToPiSequence(rawInput) {
+      let sequence = "";
+      for (let i = 0; i < rawInput.length; i++) {
+        const digit = parseInt(rawInput[i], 10);
+        if (isNaN(digit)) return null;
+        const piIndex = (digit === 0 ? 10 : digit) - 1;
+        sequence += PI_DECIMALS[piIndex];
+      }
+      return sequence;
+    }
+
+    async function decryptVault(piKeyString) {
+      const enc = new TextEncoder();
+      const dec = new TextDecoder();
+
+      const keyMaterial = await crypto.subtle.importKey(
+        "raw",
+        enc.encode(piKeyString),
+        { name: "PBKDF2" },
+        false,
+        ["deriveKey"]
+      );
+
+      const aesKey = await crypto.subtle.deriveKey(
+        {
+          name: "PBKDF2",
+          salt: new Uint8Array(VAULT_BLOB.salt),
+          iterations: 100000,
+          hash: "SHA-256"
+        },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["decrypt"]
+      );
+
+      const decryptedBuffer = await crypto.subtle.decrypt(
+        {
+          name: "AES-GCM",
+          iv: new Uint8Array(VAULT_BLOB.iv)
+        },
+        aesKey,
+        new Uint8Array(VAULT_BLOB.cipher)
+      );
+
+      return dec.decode(decryptedBuffer);
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      card.classList.remove('error', 'success');
+      statusMsg.textContent = "Computing π decimal cipher...";
+      statusMsg.className = "status";
+
+      const raw = passInput.value.trim();
+      const piMapped = mapToPiSequence(raw);
+
+      if (!piMapped) {
+        triggerError("Invalid input: Numeric digits only.");
+        return;
+      }
+
+      try {
+        const unlockedUrl = await decryptVault(piMapped);
+        card.classList.add('success');
+        statusMsg.textContent = "π Sequence Verified — Decrypting & Redirecting...";
+        statusMsg.className = "status ok";
+        directLink.href = unlockedUrl;
+        directLink.style.display = "inline-block";
+
+        setTimeout(() => {
+          window.location.href = unlockedUrl;
+        }, 700);
+      } catch (err) {
+        triggerError("Access Denied: π Decryption Failed.");
+      }
+    });
+
+    function triggerError(msg) {
+      void card.offsetWidth;
+      card.classList.add('error');
+      statusMsg.textContent = msg;
+      statusMsg.className = "status err";
+      passInput.value = "";
+      passInput.focus();
+    }
+  </script>
+</body>
+</html>
